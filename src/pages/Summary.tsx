@@ -1,199 +1,240 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { TrendingUp, TrendingDown, Activity, Users, Clock, Route } from "lucide-react"
+"use client";
 
-const Summary = () => {
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, Download } from "lucide-react";
+import { initializeApp, getApps } from "firebase/app";
+import { getDatabase, ref, onValue, off } from "firebase/database";
+
+// Firebase config (your project)
+const firebaseConfig = {
+  apiKey: "AIzaSyBjUa8RvsTkyBoCyjYdDLsXdnO38IMlfUw",
+  authDomain: "drishti2-5022b.firebaseapp.com",
+  databaseURL: "https://drishti2-5022b-default-rtdb.firebaseio.com/",
+  projectId: "drishti2-5022b",
+  storageBucket: "drishti2-5022b.appspot.com",
+  messagingSenderId: "434868659248",
+  appId: "1:434868659248:web:be69fa19f8e4a96aad79f5",
+  measurementId: "G-N8FB6HV8PZ",
+};
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const db = getDatabase(app);
+
+interface User {
+  role: string;
+}
+
+interface SummaryData {
+  summary: string;
+  insights: string[];
+  recommendations: string[];
+  timestamp: string;
+}
+
+interface GeminiSummariesProps {
+  user: User;
+}
+
+export function GeminiSummaries({ user }: GeminiSummariesProps) {
+  const [liveSummary, setLiveSummary] = useState<SummaryData | null>(null);
+  const [detailedSummary, setDetailedSummary] = useState<SummaryData | null>(null);
+  const [detailedLoading, setDetailedLoading] = useState(false);
+  const [showDetailed, setShowDetailed] = useState(false);
+
+  useEffect(() => {
+    const currentRef = ref(db, "summaries/current");
+    const unsubscribe = onValue(currentRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) setLiveSummary(data);
+    });
+    return () => {
+      off(currentRef);
+      unsubscribe();
+    };
+  }, []);
+
+  const handleRefresh = () => {
+    const currentRef = ref(db, "summaries/current");
+    onValue(
+      currentRef,
+      (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          setLiveSummary(data);
+          setShowDetailed(false);
+          setDetailedSummary(null);
+        }
+      },
+      { onlyOnce: true }
+    );
+  };
+
+  const handleRequestDetailed = () => {
+    setDetailedLoading(true);
+    setShowDetailed(true);
+    const detailedRef = ref(db, "summaries/detailed");
+    onValue(
+      detailedRef,
+      (snapshot) => {
+        const data = snapshot.val();
+        setDetailedLoading(false);
+        if (data) setDetailedSummary(data);
+        else setDetailedSummary(null);
+      },
+      { onlyOnce: true }
+    );
+  };
+
+  const summary = liveSummary ?? {
+    summary:
+      "The system is currently monitoring elevated crowd density in Zone A (85%) with a predicted surge in the next 8-12 minutes. Main entrance congestion is building due to event start time. Recommend deploying 2 additional responders to manage flow and prevent bottlenecks.",
+    insights: [
+      "Zone A showing highest activity with 85% capacity",
+      "Event start time correlation detected",
+      "Traffic patterns suggest 15-minute peak window",
+    ],
+    recommendations: [
+      "Deploy responders to Zone A immediately",
+      "Activate secondary entrance routing",
+      "Prepare crowd control barriers",
+    ],
+    timestamp: new Date().toISOString(),
+  };
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-foreground">System Summary</h1>
-        <div className="text-sm text-muted-foreground">Last updated: 2 minutes ago</div>
+    <div className="max-w-3xl mx-auto space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">AI Summary</h1>
+          <p className="text-gray-600">Gemini-powered intelligent situation overview</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleRefresh}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+          <Button variant="outline" size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Activity className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">94.2%</div>
-                <div className="text-sm text-muted-foreground">System Uptime</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Users className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">1,847</div>
-                <div className="text-sm text-muted-foreground">Active Users</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Route className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">342</div>
-                <div className="text-sm text-muted-foreground">Routes Optimized</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Clock className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">23.5m</div>
-                <div className="text-sm text-muted-foreground">Avg Travel Time</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Performance Metrics</CardTitle>
-            <CardDescription>Key system performance indicators</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Traffic Flow Efficiency</span>
-                <span className="text-sm text-muted-foreground">87%</span>
-              </div>
-              <Progress value={87} className="h-2" />
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Route Optimization</span>
-                <span className="text-sm text-muted-foreground">92%</span>
-              </div>
-              <Progress value={92} className="h-2" />
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">System Response Time</span>
-                <span className="text-sm text-muted-foreground">95%</span>
-              </div>
-              <Progress value={95} className="h-2" />
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">User Satisfaction</span>
-                <span className="text-sm text-muted-foreground">89%</span>
-              </div>
-              <Progress value={89} className="h-2" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Daily Statistics</CardTitle>
-            <CardDescription>Today's activity summary</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-              <div className="flex items-center gap-3">
-                <TrendingUp className="h-5 w-5 text-green-500" />
-                <div>
-                  <div className="font-medium">Total Routes Calculated</div>
-                  <div className="text-sm text-muted-foreground">8,543 routes</div>
-                </div>
-              </div>
-              <div className="text-green-500 text-sm font-medium">+12%</div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-              <div className="flex items-center gap-3">
-                <TrendingUp className="h-5 w-5 text-green-500" />
-                <div>
-                  <div className="font-medium">Average Speed Increase</div>
-                  <div className="text-sm text-muted-foreground">18% improvement</div>
-                </div>
-              </div>
-              <div className="text-green-500 text-sm font-medium">+5%</div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-              <div className="flex items-center gap-3">
-                <TrendingDown className="h-5 w-5 text-red-500" />
-                <div>
-                  <div className="font-medium">Congestion Incidents</div>
-                  <div className="text-sm text-muted-foreground">23 incidents</div>
-                </div>
-              </div>
-              <div className="text-red-500 text-sm font-medium">-8%</div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-secondary rounded-lg">
-              <div className="flex items-center gap-3">
-                <TrendingUp className="h-5 w-5 text-green-500" />
-                <div>
-                  <div className="font-medium">User Engagement</div>
-                  <div className="text-sm text-muted-foreground">4.2 hours avg</div>
-                </div>
-              </div>
-              <div className="text-green-500 text-sm font-medium">+15%</div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
+      <Card className="hover:shadow-md transition-shadow border">
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Latest system events and updates</CardDescription>
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+            <CardTitle className="text-lg font-semibold">Current Situation Overview</CardTitle>
+            <div className="flex items-center gap-4">
+              <Badge variant="destructive" className="capitalize text-xs">
+                High Priority
+              </Badge>
+              <span className="text-xs text-gray-500">
+                {liveSummary ? new Date(liveSummary.timestamp).toLocaleTimeString() : "Unknown"}
+              </span>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 border-l-4 border-l-primary bg-secondary/50 rounded-r-lg">
-              <div className="text-sm">
-                <span className="font-medium">Route optimization completed</span> for downtown area
-              </div>
-              <div className="text-xs text-muted-foreground ml-auto">5 min ago</div>
+
+        <CardContent className="space-y-6">
+          <section className="bg-gray-800 rounded-md p-4 text-white">
+            <h4 className="font-semibold text-sm mb-1">AI Analysis</h4>
+            <p className="text-sm leading-relaxed">{summary.summary}</p>
+          </section>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold mb-1 text-gray-800">Key Insights</h4>
+              <ul className="list-disc list-inside text-gray-700 space-y-1">
+                {summary.insights.map((insight, idx) => (
+                  <li key={idx}>{insight}</li>
+                ))}
+              </ul>
             </div>
-            
-            <div className="flex items-center gap-3 p-3 border-l-4 border-l-green-500 bg-secondary/50 rounded-r-lg">
-              <div className="text-sm">
-                <span className="font-medium">Traffic signal synchronization</span> updated successfully
-              </div>
-              <div className="text-xs text-muted-foreground ml-auto">12 min ago</div>
+            <div>
+              <h4 className="font-semibold mb-1 text-gray-800">Recommendations</h4>
+              <ul className="list-disc list-inside text-gray-700 space-y-1">
+                {summary.recommendations.map((rec, idx) => (
+                  <li key={idx}>{rec}</li>
+                ))}
+              </ul>
             </div>
-            
-            <div className="flex items-center gap-3 p-3 border-l-4 border-l-blue-500 bg-secondary/50 rounded-r-lg">
-              <div className="text-sm">
-                <span className="font-medium">New user registration</span> from mobile app
-              </div>
-              <div className="text-xs text-muted-foreground ml-auto">18 min ago</div>
-            </div>
+          </div>
+
+          <div>
+            <Button variant="outline" size="sm" onClick={handleRequestDetailed}>
+              Request Detailed Analysis
+            </Button>
           </div>
         </CardContent>
       </Card>
+
+      {showDetailed && (
+        <Card className="border mt-6">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-primary">
+              Detailed AI Situation Analysis
+            </CardTitle>
+            <CardDescription>Generated by Gemini AI</CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            {detailedLoading && (
+              <p className="text-gray-600">Generating detailed analysis, please wait...</p>
+            )}
+
+            {!detailedLoading && detailedSummary && (
+              <div className="bg-gray-900 rounded-md p-4 text-white space-y-4">
+                <section>
+                  <h5 className="font-semibold">Summary</h5>
+                  <p>{detailedSummary.summary}</p>
+                </section>
+
+                <section>
+                  <h5 className="font-semibold mt-4">Insights</h5>
+                  <ul className="list-disc list-inside space-y-1">
+                    {detailedSummary.insights.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                </section>
+
+                <section>
+                  <h5 className="font-semibold mt-4">Recommendations</h5>
+                  <ul className="list-disc list-inside space-y-1">
+                    {detailedSummary.recommendations.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                </section>
+              </div>
+            )}
+
+            {!detailedLoading && !detailedSummary && (
+              <p className="text-gray-600">No detailed analysis is currently available.</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
-  )
+  );
 }
 
-export default Summary
+// Wrapper page component
+const Summary = () => {
+  const user = { role: "admin" };
+  return (
+    <div className="container mx-auto py-6 px-4">
+      <GeminiSummaries user={user} />
+    </div>
+  );
+};
+
+export default Summary;
