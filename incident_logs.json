@@ -1,0 +1,26 @@
+[
+  {
+    "date": "2024-05-12T15:24:00",
+    "zone": "2",
+    "symptoms": "Unconscious, irregular breathing",
+    "action": "Basic life support initiated, airway cleared, rescue breathing provided. Medical team arrived within 5 minutes."
+  },
+  {
+    "date": "2024-05-18T08:40:00",
+    "zone": "1",
+    "symptoms": "Severe bleeding from leg",
+    "action": "Direct pressure applied, limb elevated, tourniquet used. Patient stabilized and transferred to hospital."
+  },
+  {
+    "date": "2024-06-02T22:10:00",
+    "zone": "3",
+    "symptoms": "Unconscious, normal breathing",
+    "action": "Placed in recovery position, periodically monitored. No spinal injury. Patient regained consciousness after 7 minutes."
+  },
+  {
+    "date": "2024-06-14T14:05:00",
+    "zone": "4",
+    "symptoms": "Burns on right arm",
+    "action": "Arm cooled under water, covered with sterile bandage. No blisters broken. Patient referred for further evaluation."
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "timestamp": "2025-07-26T17:00",
+    "location": "Main Exit",
+    "reason": "Accident",
+    "status": "active"
+  },
+  {
+    "timestamp": "2025-07-26T16:30",
+    "location": "North Gate",
+    "reason": "Police Blockade",
+    "status": "cleared"
+  }
+]

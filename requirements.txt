@@ -1,0 +1,8 @@
+Flask
+flask-cors
+sentence-transformers
+scann
+openai
+pandas
+numpy
+gunicorn
